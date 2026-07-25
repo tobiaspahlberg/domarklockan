@@ -57,6 +57,26 @@
   }
   .updatebanner[hidden]{display:none}
   #formList{flex-shrink:0}
+
+  /* Matchhistorik */
+  #matchLists{flex-shrink:0}
+  .mh-title{
+    color:var(--dim);font-size:13px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;margin:2px 4px 8px;
+  }
+  .mh-section{margin-bottom:16px}
+  .mrow{
+    display:flex;align-items:center;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .mrow.ongoing{border-left:5px solid var(--run)}
+  .minfo{flex:1;min-width:0}
+  .mname{font-weight:800;font-size:16px}
+  .mmeta{color:var(--dim);font-size:13px;margin-top:2px}
+  .mbtn{border:none;border-radius:10px;padding:11px 14px;font-weight:800;font-size:14px;cursor:pointer}
+  .mbtn.resume{background:var(--go);color:#08110B}
+  .mbtn.del{background:none;border:1px solid var(--line);color:var(--dim);font-size:16px;padding:11px 12px}
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:16px;margin-bottom:12px;
@@ -248,6 +268,7 @@
     <p class="ver" id="verLabel"></p>
   </div>
   <button id="updateBanner" class="updatebanner" hidden></button>
+  <div id="matchLists"></div>
   <div id="formList"></div>
 </div>
 
@@ -332,7 +353,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.6.1";
+const APP_VERSION = "1.7.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -396,6 +417,10 @@ let home = 0, away = 0;
 let tickTimer = null, lastTs = 0;
 let audioCtx = null, alarmTimer = null;
 let wakeLock = null;
+let currentId = null;    // id för matchen i lagringen
+let createdAt = 0;
+let teamHex = {home:null, away:null};
+let lastSaveTs = 0;
 
 /* ================= HJÄLP ================= */
 const $ = id => document.getElementById(id);
@@ -404,6 +429,41 @@ const fmt = s => {
   const m = Math.floor(s/60), sec = s%60;
   return String(m).padStart(2,"0") + ":" + String(sec).padStart(2,"0");
 };
+const fmtDate = ts => new Date(ts).toLocaleString("sv-SE",
+  {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
+
+/* ================= LAGRING =================
+   Matcher sparas i telefonens localStorage och överlever därför
+   att appen stängs helt. En match försvinner bara när man själv
+   tar bort den ur listan. */
+const STORE_KEY = "domarklockan_matches";
+
+function loadAll(){
+  try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function saveAll(list){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(list)); }catch(e){}
+}
+function snapshot(){
+  return { id: currentId, createdAt, savedAt: Date.now(),
+    cfg, period, elapsed, running, alarmFired, matchOver, home, away,
+    colors: {home: teamHex.home, away: teamHex.away} };
+}
+function saveCurrent(){
+  if(!currentId || !cfg) return;
+  const list = loadAll();
+  const i = list.findIndex(m=>m.id===currentId);
+  const snap = snapshot();
+  if(i>=0) list[i] = snap; else list.unshift(snap);
+  // Behåll max 15 avslutade matcher (pågående sparas alltid)
+  const doneIds = list.filter(m=>m.matchOver).slice(15).map(m=>m.id);
+  saveAll(list.filter(m=>!doneIds.includes(m.id)));
+}
+function deleteMatch(id){
+  saveAll(loadAll().filter(m=>m.id!==id));
+  renderMatchLists();
+}
 
 /* ================= STARTSKÄRM ================= */
 function buildStart(){
@@ -432,10 +492,110 @@ function startMatch(form, variant){
           age: form.age, info: form.info };
   period = 1; elapsed = 0; running = false; alarmFired = false; matchOver = false;
   home = 0; away = 0;
+  currentId = Date.now(); createdAt = currentId;
+  resetColors();
   $("formName").textContent = `${cfg.name} · ${cfg.periods} × ${cfg.min} min`;
   buildSegs();
   showScreen("match");
   render();
+  saveCurrent();
+}
+
+function resumeMatch(id){
+  const m = loadAll().find(x=>x.id===id);
+  if(!m) return;
+  initAudio(); // knapptryckning = tillfälle att aktivera ljudet
+  currentId = m.id; createdAt = m.createdAt;
+  cfg = m.cfg; period = m.period; elapsed = m.elapsed;
+  alarmFired = m.alarmFired; matchOver = m.matchOver;
+  home = m.home; away = m.away;
+  resetColors();
+  if(m.colors){
+    if(m.colors.home) applyColor("home", m.colors.home);
+    if(m.colors.away) applyColor("away", m.colors.away);
+  }
+  $("formName").textContent = `${cfg.name} · ${cfg.periods} × ${cfg.min} min`;
+  buildSegs();
+  showScreen("match");
+  const target = cfg.min*60;
+  if(m.running && !alarmFired && !matchOver){
+    // Klockan gick när appen stängdes – räkna med tiden som passerat i verkligheten
+    elapsed = elapsed + (Date.now() - m.savedAt)/1000;
+    if(elapsed >= target){
+      elapsed = target;
+      render();
+      fireAlarm(); // perioden hann ta slut medan appen var stängd
+      saveCurrent();
+      return;
+    }
+    startClock();
+  } else {
+    running = false;
+    render();
+  }
+  saveCurrent();
+}
+
+function renderMatchLists(){
+  const wrap = $("matchLists");
+  wrap.innerHTML = "";
+  const list = loadAll();
+  const sections = [
+    ["Pågående matcher", list.filter(m=>!m.matchOver), true],
+    ["Tidigare matcher",  list.filter(m=>m.matchOver),  false],
+  ];
+  sections.forEach(([title, items, isOngoing])=>{
+    if(!items.length) return;
+    const sec = document.createElement("div");
+    sec.className = "mh-section";
+    sec.innerHTML = `<div class="mh-title">${title}</div>`;
+    items.forEach(m=>{
+      const row = document.createElement("div");
+      row.className = "mrow" + (isOngoing ? " ongoing" : "");
+      let el = m.elapsed;
+      if(isOngoing && m.running && !m.alarmFired){
+        el = Math.min(m.cfg.min*60, el + (Date.now()-m.savedAt)/1000);
+      }
+      const meta = isOngoing
+        ? `Period ${m.period} av ${m.cfg.periods} · ${fmt(el)} · ${m.home}–${m.away} · ${fmtDate(m.savedAt)}`
+        : `Slutresultat ${m.home}–${m.away} · ${fmtDate(m.savedAt)}`;
+      row.innerHTML = `<div class="minfo">
+          <div class="mname">${m.cfg.name} <span style="font-weight:500;color:var(--dim)">${m.cfg.label}</span></div>
+          <div class="mmeta">${meta}</div>
+        </div>`;
+      if(isOngoing){
+        const b = document.createElement("button");
+        b.className = "mbtn resume";
+        b.textContent = "Fortsätt";
+        b.onclick = ()=> resumeMatch(m.id);
+        row.appendChild(b);
+      }
+      const d = document.createElement("button");
+      d.className = "mbtn del";
+      d.textContent = "🗑";
+      d.title = "Ta bort matchen";
+      d.onclick = ()=>{
+        if(confirm(`Ta bort matchen ${m.cfg.name} (${m.home}–${m.away})? Det går inte att ångra.`)){
+          deleteMatch(m.id);
+        }
+      };
+      row.appendChild(d);
+      sec.appendChild(row);
+    });
+    wrap.appendChild(sec);
+  });
+}
+
+function resetColors(){
+  teamHex = {home:null, away:null};
+  ["home","away"].forEach(side=>{
+    const card = $(side==="home" ? "homeTeam" : "awayTeam");
+    card.style.borderTopColor = "";
+    const tn = card.querySelector(".tname");
+    tn.style.color = ""; tn.style.textShadow = "";
+    const sp = card.querySelector(".shirtpath");
+    if(sp) sp.setAttribute("fill", "#3A4C61");
+  });
 }
 
 function showScreen(id){
@@ -511,6 +671,7 @@ function tick(){
     elapsed = target;
     fireAlarm();
   }
+  if(now - lastSaveTs > 3000){ lastSaveTs = now; saveCurrent(); }
   render();
 }
 
@@ -520,16 +681,18 @@ function startClock(){
   tickTimer = setInterval(tick, 250);
   requestWakeLock();
   render();
+  saveCurrent();
 }
 function stopClock(){
   running = false;
   clearInterval(tickTimer);
   render();
+  saveCurrent();
 }
 
 function mainButton(){
   initAudio(); // måste skapas vid en knapptryckning (krav i iOS/Android)
-  if(matchOver){ showScreen("start"); return; }
+  if(matchOver){ renderMatchLists(); showScreen("start"); return; }
   if(running){ stopClock(); return; }
   if(alarmFired){
     // Gå vidare till nästa period eller avsluta
@@ -540,6 +703,7 @@ function mainButton(){
       matchOver = true;
       releaseWakeLock();
       render();
+      saveCurrent(); // sparas som avslutad i historiken
     }
     return;
   }
@@ -584,6 +748,7 @@ function fireAlarm(){
   $("alarmOverlay").classList.add("active");
   beep();
   alarmTimer = setInterval(beep, 1400); // upprepa tills man stänger av
+  saveCurrent();
 }
 
 $("btnDismiss").onclick = ()=>{
@@ -591,13 +756,14 @@ $("btnDismiss").onclick = ()=>{
   if(navigator.vibrate) navigator.vibrate(0);
   $("alarmOverlay").classList.remove("active");
   render();
+  saveCurrent();
 };
 
 /* ================= MÅL ================= */
-$("homeTeam").onclick = e=>{ if(e.target.id!=="homeMinus"){ home++; render(); } };
-$("awayTeam").onclick = e=>{ if(e.target.id!=="awayMinus"){ away++; render(); } };
-$("homeMinus").onclick = e=>{ e.stopPropagation(); if(home>0) home--; render(); };
-$("awayMinus").onclick = e=>{ e.stopPropagation(); if(away>0) away--; render(); };
+$("homeTeam").onclick = e=>{ if(e.target.id!=="homeMinus"){ home++; render(); saveCurrent(); } };
+$("awayTeam").onclick = e=>{ if(e.target.id!=="awayMinus"){ away++; render(); saveCurrent(); } };
+$("homeMinus").onclick = e=>{ e.stopPropagation(); if(home>0) home--; render(); saveCurrent(); };
+$("awayMinus").onclick = e=>{ e.stopPropagation(); if(away>0) away--; render(); saveCurrent(); };
 
 /* ================= LAGFÄRGER ================= */
 const KIT_COLORS = [
@@ -616,6 +782,7 @@ function openPalette(side){
   $("colorModal").classList.add("active");
 }
 function applyColor(side, hex){
+  teamHex[side] = hex;
   const card = $(side==="home" ? "homeTeam" : "awayTeam");
   card.style.borderTopColor = hex;
   card.querySelector(".tname").style.color = hex;
@@ -639,6 +806,7 @@ $("awayColor").innerHTML = shirtSVG("#3A4C61");
     b.onclick = ()=>{
       applyColor(pickingFor, hex);
       $("colorModal").classList.remove("active");
+      saveCurrent();
     };
     wrap.appendChild(b);
   });
@@ -708,12 +876,14 @@ $("infoModal").onclick = e=>{ if(e.target.id==="infoModal") $("infoModal").class
 /* ================= ÖVRIGT ================= */
 $("btnMain").onclick = mainButton;
 $("btnBack").onclick = ()=>{
-  if(running || (elapsed>0 && !matchOver)){
-    if(!confirm("Matchen pågår – vill du verkligen avbryta?")) return;
-  }
-  stopClock(); clearInterval(alarmTimer);
+  // Matchen slängs aldrig – den sparas och kan fortsättas från startsidan.
+  // Går klockan när man lämnar fortsätter tiden att räknas i bakgrunden.
+  saveCurrent();
+  clearInterval(tickTimer);
+  clearInterval(alarmTimer);
   $("alarmOverlay").classList.remove("active");
   releaseWakeLock();
+  renderMatchLists();
   showScreen("start");
 };
 
@@ -729,14 +899,17 @@ function releaseWakeLock(){
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
 }
 document.addEventListener("visibilitychange", ()=>{
-  // Om skärmen släckts och tänds igen: återta wake lock och synka klockan
-  if(document.visibilityState==="visible"){
-    if(running){
-      requestWakeLock();
-      tick(); // synka direkt – tid som gått medan skärmen var släckt räknas med
-    }
-    checkForUpdate(); // passa på att kolla om det finns en ny version
+  if(document.visibilityState==="hidden"){
+    // Appen läggs i bakgrunden eller stängs – spara direkt!
+    saveCurrent();
+    return;
   }
+  // Om skärmen släckts och tänds igen: återta wake lock och synka klockan
+  if(running){
+    requestWakeLock();
+    tick(); // synka direkt – tid som gått medan skärmen var släckt räknas med
+  }
+  checkForUpdate(); // passa på att kolla om det finns en ny version
 });
 
 /* ================= UPPDATERINGSKOLL =================
@@ -764,6 +937,7 @@ $("updateBanner").onclick = ()=>{
 checkForUpdate();
 
 buildStart();
+renderMatchLists();
 </script>
 </body>
 </html>

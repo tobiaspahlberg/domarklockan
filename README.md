@@ -51,7 +51,9 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 
 ## Bra att veta
 
-- **Ljudet fungerar bara när appen är öppen på skärmen.** Låses telefonen med sidoknappen fortsätter klockan att räkna rätt tid, men larmet hörs först när skärmen tänds igen. Använd därför applåset 🔓 istället för att låsa telefonen under perioderna.
+- **Matcher sparas automatiskt.** Allt – tid, period, ställning och tröjfärger – sparas löpande i telefonen. Stängs appen av misstag (eller av Androids batterisparfunktion) finns matchen kvar under **Pågående matcher** på startsidan, och gick klockan när appen stängdes fortsätter tiden att räknas i verkligheten tills du trycker **Fortsätt**. Knappen **‹ Byt spelform** avbryter inte längre matchen utan lägger bara tillbaka den i listan.
+- **Historik.** Avslutade matcher hamnar under **Tidigare matcher** med slutresultat och tidpunkt (de 15 senaste behålls). Både pågående och tidigare matcher tas bort med 🗑-knappen – efter en bekräftelsefråga, så inget försvinner av misstag.
+- **Ljudet fungerar bara när appen är öppen på skärmen.** Låses telefonen med sidoknappen fortsätter klockan att räkna rätt tid, men larmet hörs först när skärmen tänds igen. Använd därför applåset istället för att låsa telefonen under perioderna.
 - **Före match:** skruva upp medievolymen, stäng av "Stör ej", och testa gärna larmet hemma en gång så du vet hur det låter.
 - **Skärmen hålls tänd** under hela matchen, vilket drar en del batteri – bra att ha telefonen laddad före match.
 - **Uppdateringar:** appen visar sitt versionsnummer längst upp på startskärmen. Varje gång den öppnas kollar den om en nyare version finns på servern – i så fall visas en gul knapp **"Ny version finns – tryck här för att uppdatera"**. Viktigt när du laddar upp en ny version: höj `APP_VERSION`-numret högst upp i `index.html`:s skriptdel, annars upptäcks inte uppdateringen. (Tänk också på att GitHub Pages kan dröja upp till ca 10 minuter med att servera nya filer.)
