@@ -154,24 +154,36 @@
 
   /* Låsläge */
   #lockBtn{
-    background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
-    color:var(--text);font-size:17px;padding:7px 14px;cursor:pointer;
+    margin-top:16px;
+    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
+    color:var(--dim);font-size:16px;font-weight:600;padding:12px 26px;cursor:pointer;
   }
+  #lockBtn:active{background:#243347}
   #lockOverlay{
     position:fixed;inset:0;z-index:15;display:none;
-    background:transparent;touch-action:none;
+    background:rgba(11,20,32,.3);touch-action:none;
   }
   #lockOverlay.active{display:block}
-  #lockHint{
-    position:absolute;left:50%;bottom:28px;transform:translateX(-50%);
-    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
-    color:var(--dim);font-size:14px;font-weight:600;padding:10px 18px;
-    display:flex;align-items:center;gap:10px;white-space:nowrap;
+  #lockChip{
+    position:absolute;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+    background:var(--run);color:#241D00;font-weight:800;font-size:16px;
+    border-radius:999px;padding:9px 20px;white-space:nowrap;
   }
-  #unlockRing{
-    width:18px;height:18px;border-radius:50%;
-    background:conic-gradient(var(--run) calc(var(--p,0)*1%), var(--line) 0);
+  #slideTrack{
+    position:absolute;bottom:calc(28px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    width:min(340px,86vw);height:68px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--line);overflow:hidden;
   }
+  #slideText{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--dim);font-size:15px;font-weight:600;padding-left:36px;
+  }
+  #slideKnob{
+    position:absolute;left:5px;top:4px;width:58px;height:58px;border-radius:50%;
+    background:var(--run);display:flex;align-items:center;justify-content:center;
+    font-size:24px;touch-action:none;cursor:grab;
+  }
+  #slideKnob.snap{transition:left .25s ease}
 </style>
 </head>
 <body>
@@ -190,7 +202,6 @@
   <div class="topbar">
     <button class="backbtn" id="btnBack">‹ Byt spelform</button>
     <span class="formname" id="formName"></span>
-    <button id="lockBtn" title="Lås skärmen">🔓</button>
   </div>
 
   <div class="periods" id="periodSegs"></div>
@@ -199,6 +210,7 @@
   <div class="clockwrap">
     <div class="clock" id="clock">00:00</div>
     <div class="clocksub" id="clockSub"></div>
+    <button id="lockBtn">🔓 Lås skärmen</button>
   </div>
 
   <div class="score">
@@ -225,9 +237,13 @@
 </div>
 
 <!-- LARM -->
-<!-- LÅST LÄGE: fångar alla tryck, håll för att låsa upp -->
+<!-- LÅST LÄGE: fångar alla tryck, svep för att låsa upp -->
 <div id="lockOverlay">
-  <div id="lockHint"><span id="unlockRing"></span><span>🔒 Håll 1 sekund för att låsa upp</span></div>
+  <div id="lockChip">🔒 Skärmen är låst</div>
+  <div id="slideTrack">
+    <div id="slideText">Dra för att låsa upp&nbsp;→</div>
+    <div id="slideKnob">🔓</div>
+  </div>
 </div>
 
 <!-- FÄRGVÄLJARE -->
@@ -516,40 +532,45 @@ $("awayColor").onclick = e=>{ e.stopPropagation(); openPalette("away"); };
 $("colorModal").onclick = e=>{ if(e.target.id==="colorModal") $("colorModal").classList.remove("active"); };
 
 /* ================= LÅSLÄGE =================
-   Låser alla tryck på skärmen. Håll fingret 1 s för att låsa upp. */
-let locked = false, holdTimer = null, holdStart = 0, holdRAF = null;
-const HOLD_MS = 1000;
+   Låser alla tryck på skärmen. Dra reglaget åt höger för att låsa upp,
+   som ett vanligt skärmlås. */
+let locked = false;
 
 function setLocked(v){
   locked = v;
   $("lockOverlay").classList.toggle("active", v);
-  $("lockBtn").textContent = v ? "🔒" : "🔓";
+  resetKnob();
 }
 $("lockBtn").onclick = ()=> setLocked(true);
 
-function holdProgress(){
-  const p = Math.min(100, (Date.now()-holdStart)/HOLD_MS*100);
-  $("unlockRing").style.setProperty("--p", p);
-  if(p<100) holdRAF = requestAnimationFrame(holdProgress);
-}
-function startHold(e){
+const knob = $("slideKnob"), track = $("slideTrack");
+let dragId = null, grabX = 0;
+const KNOB_MIN = 5;
+function knobMax(){ return track.clientWidth - knob.offsetWidth - KNOB_MIN; }
+function resetKnob(){ knob.classList.add("snap"); knob.style.left = KNOB_MIN+"px"; }
+
+knob.addEventListener("pointerdown", e=>{
   e.preventDefault();
-  holdStart = Date.now();
-  holdRAF = requestAnimationFrame(holdProgress);
-  holdTimer = setTimeout(()=>{ cancelHold(); setLocked(false); }, HOLD_MS);
-}
-function cancelHold(){
-  clearTimeout(holdTimer);
-  cancelAnimationFrame(holdRAF);
-  $("unlockRing").style.setProperty("--p", 0);
-}
-const lo = $("lockOverlay");
-lo.addEventListener("touchstart", startHold, {passive:false});
-lo.addEventListener("touchend", cancelHold);
-lo.addEventListener("touchcancel", cancelHold);
-lo.addEventListener("mousedown", startHold);
-lo.addEventListener("mouseup", cancelHold);
-lo.addEventListener("mouseleave", cancelHold);
+  dragId = e.pointerId;
+  grabX = e.clientX - knob.offsetLeft;
+  knob.classList.remove("snap");
+  knob.setPointerCapture(dragId);
+});
+knob.addEventListener("pointermove", e=>{
+  if(dragId !== e.pointerId) return;
+  const x = Math.max(KNOB_MIN, Math.min(knobMax(), e.clientX - grabX));
+  knob.style.left = x+"px";
+});
+knob.addEventListener("pointerup", e=>{
+  if(dragId !== e.pointerId) return;
+  dragId = null;
+  if(knob.offsetLeft >= knobMax()*0.85){
+    setLocked(false);           // hela vägen fram = upplåst
+  } else {
+    resetKnob();                // annars glider knoppen tillbaka
+  }
+});
+knob.addEventListener("pointercancel", ()=>{ dragId = null; resetKnob(); });
 
 /* ================= ÖVRIGT ================= */
 $("btnMain").onclick = mainButton;

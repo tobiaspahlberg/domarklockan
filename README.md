@@ -43,8 +43,9 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 
 ### Låsläge (mot feltryck)
 
-- Tryck på hänglåset **🔓** uppe till höger för att låsa skärmen – klockan syns och går, men inga tryck registreras
-- **Lås upp:** håll fingret på skärmen i 1 sekund (en ring fylls medan du håller)
+- Tryck på **🔓 Lås skärmen** under klockan – klockan syns och går, men inga tryck registreras
+- När skärmen är låst visas en gul **🔒 Skärmen är låst**-markering högst upp
+- **Lås upp:** dra det gula reglaget längst ner hela vägen åt höger, som ett vanligt skärmlås
 - När larmet går låses skärmen upp automatiskt så att ljudet kan stängas av
 
 ## Bra att veta
