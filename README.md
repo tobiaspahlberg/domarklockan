@@ -56,7 +56,7 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 - **Ljudet fungerar bara när appen är öppen på skärmen.** Låses telefonen med sidoknappen fortsätter klockan att räkna rätt tid, men larmet hörs först när skärmen tänds igen. Använd därför applåset istället för att låsa telefonen under perioderna.
 - **Före match:** skruva upp medievolymen, stäng av "Stör ej", och testa gärna larmet hemma en gång så du vet hur det låter.
 - **Skärmen hålls tänd** under hela matchen, vilket drar en del batteri – bra att ha telefonen laddad före match.
-- **Uppdateringar:** appen visar sitt versionsnummer längst upp på startskärmen. Varje gång den öppnas kollar den om en nyare version finns på servern – i så fall visas en gul knapp **"Ny version finns – tryck här för att uppdatera"**. Viktigt när du laddar upp en ny version: höj `APP_VERSION`-numret högst upp i `index.html`:s skriptdel, annars upptäcks inte uppdateringen. (Tänk också på att GitHub Pages kan dröja upp till ca 10 minuter med att servera nya filer.)
+- **Uppdateringar:** appen visar sitt versionsnummer längst upp på startskärmen. Varje gång den öppnas kollar den om en nyare version finns på servern – i så fall visas en gul banner. Ett tryck på bannern visar **nyheterna i den nya versionen** med valet att uppdatera nu eller senare. Tryck på versionsnumret för att se hela ändringsloggen. Viktigt när du laddar upp en ny version: höj `APP_VERSION`-numret i `index.html` **och** lägg till en post överst i changelog-blocket (`<script type="application/json" id="changelog">`) med samma versionsnummer och nyheterna. (GitHub Pages kan dröja upp till ca 10 minuter med att servera nya filer.)
 
 ## Filer
 
