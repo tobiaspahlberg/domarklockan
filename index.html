@@ -102,10 +102,6 @@
   .team:active{background:var(--surface-2)}
   .team .tname{font-size:14px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
   .team .goals{font-size:clamp(48px,16vw,84px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
-  .team .minus{
-    margin-top:2px;background:none;border:1px solid var(--line);border-radius:8px;
-    color:var(--dim);font-size:16px;padding:2px 18px;cursor:pointer;
-  }
   .scorehint{text-align:center;color:var(--dim);font-size:12px;margin-bottom:10px}
 
   /* Stora knappar */
@@ -136,11 +132,17 @@
 
   /* Lagfärger */
   .team{border-top:8px solid var(--line)}
-  .teamrow{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:2px}
-  .colorbtn{
-    width:34px;height:30px;border-radius:8px;border:1px solid var(--line);
-    background:var(--surface-2);cursor:pointer;font-size:15px;
+  .teamrow{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:8px}
+  .team .minus{
+    background:none;border:1px solid var(--line);border-radius:10px;
+    color:var(--dim);font-size:26px;line-height:1;width:64px;height:48px;cursor:pointer;
   }
+  .colorbtn{
+    width:64px;height:48px;border-radius:10px;border:1px solid var(--line);
+    background:var(--surface-2);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;padding:0;
+  }
+  .colorbtn svg{width:32px;height:32px}
 
   /* Färgväljare */
   #colorModal{
@@ -153,10 +155,11 @@
     padding:20px;max-width:340px;width:100%;
   }
   .palette h3{font-size:17px;margin-bottom:14px;text-align:center}
-  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
   .swatch{
-    aspect-ratio:1;border-radius:12px;border:2px solid var(--line);cursor:pointer;
+    aspect-ratio:1;border:none;background:none;cursor:pointer;padding:2px;
   }
+  .swatch svg{width:100%;height:100%}
   .swatch:active{transform:scale(.92)}
 
   /* Låsläge */
@@ -228,7 +231,7 @@
       <div class="goals" id="homeGoals">0</div>
       <div class="teamrow">
         <button class="minus" id="homeMinus">−</button>
-        <button class="colorbtn" id="homeColor" title="Välj tröjfärg">🎽</button>
+        <button class="colorbtn" id="homeColor" title="Välj tröjfärg"></button>
       </div>
     </div>
     <div class="team" id="awayTeam">
@@ -236,7 +239,7 @@
       <div class="goals" id="awayGoals">0</div>
       <div class="teamrow">
         <button class="minus" id="awayMinus">−</button>
-        <button class="colorbtn" id="awayColor" title="Välj tröjfärg">🎽</button>
+        <button class="colorbtn" id="awayColor" title="Välj tröjfärg"></button>
       </div>
     </div>
   </div>
@@ -275,7 +278,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -513,6 +516,10 @@ const KIT_COLORS = [
   ["Vit","#F5F7F4"], ["Svart","#111418"], ["Röd","#E5484D"], ["Blå","#2F6FED"],
   ["Gul","#FFD60A"], ["Grön","#35C46A"], ["Orange","#FF8A2A"], ["Lila","#9A5CF5"]
 ];
+const SHIRT_D = "M7.5 2 L2.5 4.5 L1 8.5 L4.5 10 L4.5 22 L19.5 22 L19.5 10 L23 8.5 L21.5 4.5 L16.5 2 C16 3.8 14.2 5 12 5 C9.8 5 8 3.8 7.5 2 Z";
+function shirtSVG(hex){
+  return `<svg viewBox="0 0 24 24"><path class="shirtpath" d="${SHIRT_D}" fill="${hex}" stroke="#8FA0B3" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
+}
 let pickingFor = null; // "home" | "away"
 
 function openPalette(side){
@@ -527,14 +534,20 @@ function applyColor(side, hex){
   // Svart syns dåligt mot mörk bakgrund – ge namnet en ljus kant i det fallet
   card.querySelector(".tname").style.textShadow =
     (hex==="#111418") ? "0 0 6px rgba(245,247,244,.8)" : "none";
+  // Färga tröj-ikonen på knappen
+  card.querySelector(".shirtpath").setAttribute("fill", hex);
 }
+// Rita tröjknapparna (grå tröja = ingen färg vald ännu)
+$("homeColor").innerHTML = shirtSVG("#3A4C61");
+$("awayColor").innerHTML = shirtSVG("#3A4C61");
+
 (function buildSwatches(){
   const wrap = $("swatches");
   KIT_COLORS.forEach(([name,hex])=>{
     const b = document.createElement("button");
     b.className = "swatch";
-    b.style.background = hex;
     b.title = name;
+    b.innerHTML = shirtSVG(hex);
     b.onclick = ()=>{
       applyColor(pickingFor, hex);
       $("colorModal").classList.remove("active");
