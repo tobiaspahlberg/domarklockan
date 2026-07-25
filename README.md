@@ -40,6 +40,7 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 4. **Tröjfärg:** tryck på tröj-ikonen under respektive lag och välj bland tröjorna i paletten. Vald färg syns på tröjan, på lagnamnet och som en rand överst på lagets ruta
 5. **När tiden är slut** blinkar skärmen rött och ett larm ljuder tills det stängs av. Därefter startas nästa period med den gröna knappen
 6. Om klockan får gå förbi full tid visas **tilläggstiden i orange** (t.ex. +0:15)
+7. **Regler:** tryck på **?**-knappen uppe till höger under match för en sammanfattning av spelformens regler – spelplan, retreatlinje, fasta situationer, 4-målsregeln med mera – med länk till de fullständiga reglerna på svenskfotboll.se
 
 ### Låsläge (mot feltryck)
 

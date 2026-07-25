@@ -41,10 +41,15 @@
 
   /* ---------- STARTSKÄRM ---------- */
   #start{padding:20px 16px;overflow-y:auto}
-  .brand{margin:8px 4px 20px}
-  .brand h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
-  .brand p{color:var(--dim);font-size:14px;margin-top:4px}
-  .ver{color:var(--dim);font-size:12px;margin-top:6px;opacity:.7}
+  .brand{
+    position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#005293,#003567);
+    border-radius:20px;padding:22px 20px 18px;margin:4px 0 18px;
+  }
+  .brand h1{font-size:28px;font-weight:800;letter-spacing:-.02em;color:#fff;position:relative}
+  .brand p{color:#BFD7EE;font-size:14px;margin-top:4px;max-width:30ch;position:relative}
+  .ver{color:#8FB4D9;font-size:12px;margin-top:8px;position:relative}
+  .pitchdeco{position:absolute;right:-34px;top:-18px;width:200px;pointer-events:none}
   .updatebanner{
     display:block;width:100%;background:var(--run);color:#241D00;
     border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;
@@ -57,7 +62,7 @@
   }
   .card .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
   .card .name{font-size:20px;font-weight:800}
-  .card .age{color:var(--dim);font-size:13px}
+  .card .age{background:#FECC02;color:#00427A;font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px}
   .variants{display:flex;gap:8px;flex-wrap:wrap}
   .variant{
     flex:1;min-width:120px;
@@ -74,6 +79,32 @@
   .topbar{display:flex;justify-content:space-between;align-items:center}
   .backbtn{background:none;border:none;color:var(--dim);font-size:15px;padding:8px 4px;cursor:pointer}
   .formname{color:var(--dim);font-size:14px;font-weight:600}
+  #infoBtn{
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--run);font-size:19px;font-weight:800;cursor:pointer;
+  }
+  #infoBtn:active{background:#243347}
+
+  /* Regelinfo-modal */
+  #infoModal{
+    position:fixed;inset:0;background:rgba(11,20,32,.88);
+    display:none;justify-content:center;align-items:center;z-index:20;padding:20px;
+  }
+  #infoModal.active{display:flex}
+  .infobox{
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:20px;max-width:430px;width:100%;max-height:82vh;overflow-y:auto;
+  }
+  .infobox h3{font-size:21px;font-weight:800}
+  .isub{color:var(--dim);font-size:13px;margin:2px 0 16px}
+  .irow{margin-bottom:13px}
+  .ilabel{font-weight:800;font-size:14px;color:var(--run);margin-bottom:2px}
+  .itext{font-size:14px;line-height:1.5}
+  .ilink{display:block;margin:16px 0 14px;color:#7FB3E8;font-size:14px;text-decoration:none}
+  .iclose{
+    width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;
+    color:var(--text);font-size:16px;font-weight:700;padding:14px;cursor:pointer;
+  }
 
   /* Periodsegment – visar var i matchen man är */
   .periods{display:flex;gap:6px;margin:10px 0 4px}
@@ -201,6 +232,16 @@
 <!-- STARTSKÄRM: välj spelform -->
 <div id="start" class="screen active">
   <div class="brand">
+    <svg class="pitchdeco" viewBox="0 0 200 140" aria-hidden="true">
+      <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity=".3">
+        <rect x="10" y="10" width="180" height="120" rx="4"/>
+        <line x1="100" y1="10" x2="100" y2="130"/>
+        <circle cx="100" cy="70" r="24"/>
+        <rect x="10" y="45" width="26" height="50"/>
+      </g>
+      <circle cx="150" cy="48" r="15" fill="#FECC02"/>
+      <path d="M150 38l7 5-2.7 8.5h-8.6L143 43z" fill="#005293"/>
+    </svg>
     <h1>Domarklockan</h1>
     <p>Välj spelform – speltider enligt Svensk fotbolls nationella spelformer</p>
     <p class="ver" id="verLabel"></p>
@@ -214,6 +255,7 @@
   <div class="topbar">
     <button class="backbtn" id="btnBack">‹ Byt spelform</button>
     <span class="formname" id="formName"></span>
+    <button id="infoBtn" title="Regler för spelformen">?</button>
   </div>
 
   <div class="periods" id="periodSegs"></div>
@@ -258,6 +300,17 @@
   </div>
 </div>
 
+<!-- REGELINFO -->
+<div id="infoModal">
+  <div class="infobox">
+    <h3 id="infoTitle"></h3>
+    <div class="isub" id="infoSub"></div>
+    <div id="infoList"></div>
+    <a class="ilink" href="https://aktiva.svenskfotboll.se/tranare/spelformer/" target="_blank" rel="noopener">Fullständiga regler på svenskfotboll.se →</a>
+    <button class="iclose" id="infoClose">Stäng</button>
+  </div>
+</div>
+
 <!-- FÄRGVÄLJARE -->
 <div id="colorModal">
   <div class="palette">
@@ -278,24 +331,57 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
 const FORMS = [
   { name:"3 mot 3",  age:"6–7 år",
-    variants:[{label:"Match", periods:4, min:3}] },
+    variants:[{label:"Match", periods:4, min:3}],
+    info:[
+      ["Spelplan & boll","15 × 10–12 m – använd sarg om det finns. Mål max 1,6 × 1,15 m. Bollstorlek 3."],
+      ["Spelare","Tre per lag, ingen målvakt. Fria byten."],
+      ["Fasta situationer","Avspark, sidlinjespark, hörna och frispark sätts alla igång genom att driva eller passa bollen längs marken. Motståndarna håller 3 m avstånd. Allt är indirekt – bollen får inte skjutas direkt i mål. Straff och inkast används inte."],
+      ["Kort","Gula och röda kort används inte. Vid olämpligt uppträdande byts spelaren av."],
+      ["4-målsregeln","Ligger ett lag under med fyra mål eller mer får det sätta in en extra spelare (fyra) tills ställningen är utjämnad."]
+    ]},
   { name:"5 mot 5",  age:"8–9 år",
     variants:[{label:"Enskild match", periods:3, min:15},
-              {label:"Sammandrag",    periods:3, min:10}] },
+              {label:"Sammandrag",    periods:3, min:10}],
+    info:[
+      ["Spelplan & boll","30 × 15–20 m. Mål 3 × 1,5 m. Bollstorlek 3."],
+      ["Spelare","Fyra utespelare och en målvakt per lag. Fria byten."],
+      ["Retreatlinje","Mittlinjen. När målvakten gör utkast eller fångar bollen i spel backar motståndarna till sin egen planhalva och stannar där tills målvakten satt bollen i spel – genom att rulla ut den eller lägga ner den och passa längs marken."],
+      ["Fasta situationer","Sätts igång genom att driva eller passa längs marken, motståndarna håller 5 m avstånd. Allt är indirekt. Straff och inkast används inte, och inga kort delas ut."],
+      ["4-målsregeln","Vid underläge med fyra mål eller mer får laget spela med en extra spelare (sex) tills ställningen är utjämnad."]
+    ]},
   { name:"7 mot 7",  age:"10–12 år",
     variants:[{label:"Enskild match", periods:3, min:20},
-              {label:"Sammandrag",    periods:3, min:15}] },
+              {label:"Sammandrag",    periods:3, min:15}],
+    info:[
+      ["Spelplan & boll","50–55 × 30–35 m. Straffområde 19 × 7 m. Mål max 5 × 2 m. Bollstorlek 4."],
+      ["Spelare","Sex utespelare och en målvakt per lag. Fria byten."],
+      ["Retreatlinje","7 m från mittlinjen. När målvakten har bollen i händerna backar motståndarna bakom retreatlinjen tills spelet startas – oavsett om bollen fångats i spel eller gått ut över kortlinjen. Målvakten kan vänta tills alla backat, eller välja att spela snabbt direkt."],
+      ["Frisparkar","Får slås direkt i mål. Spelarna ska hålla minst 2 m avstånd när frisparken slås."],
+      ["4-målsregeln","Vid underläge med fyra mål eller mer får laget spela med en extra spelare (åtta) tills ställningen är utjämnad."]
+    ]},
   { name:"9 mot 9",  age:"13–14 år",
-    variants:[{label:"Match", periods:3, min:25}] },
+    variants:[{label:"Match", periods:3, min:25}],
+    info:[
+      ["Spelplan & boll","65–72 × 50–55 m. Straffområde 24 × 9 m. Mål 6 × 2,2 m. Boll: storlek 4 för 13-åringar, storlek 5 för 14-åringar."],
+      ["Spelare","Åtta utespelare och en målvakt per lag. Fria byten."],
+      ["Offside","Tillämpas. En spelare är i offsideposition om hen är närmare motståndarnas mållinje än både bollen och den näst sista motspelaren när bollen spelas. Gäller bara på offensiv planhalva och spelare som är aktiva i spelet."],
+      ["Inspark","Bollen ligger stilla på valfri plats i straffområdet och är i spel när den sparkats och tydligt rört sig. Motståndarna håller minst 9 m avstånd."],
+      ["Straffspark","Slås från 9 m."]
+    ]},
   { name:"11 mot 11", age:"15 år–",
     variants:[{label:"15 år", periods:2, min:40},
-              {label:"16 år och äldre", periods:2, min:45}] },
+              {label:"16 år och äldre", periods:2, min:45}],
+    info:[
+      ["Spelplan & boll","100–110 × 60–68 m. Mål 7,32 × 2,44 m. Bollstorlek 5."],
+      ["Spelare","Tio utespelare och en målvakt per lag. Fria byten."],
+      ["Regler","Ordinarie spelregler för fotboll gäller fullt ut – offside, inkast, straffar och kort."]
+    ]},
 ];
 
 /* ================= TILLSTÅND ================= */
@@ -341,7 +427,8 @@ function buildStart(){
 }
 
 function startMatch(form, variant){
-  cfg = { name: form.name, label: variant.label, periods: variant.periods, min: variant.min };
+  cfg = { name: form.name, label: variant.label, periods: variant.periods, min: variant.min,
+          age: form.age, info: form.info };
   period = 1; elapsed = 0; running = false; alarmFired = false; matchOver = false;
   home = 0; away = 0;
   $("formName").textContent = `${cfg.name} · ${cfg.periods} × ${cfg.min} min`;
@@ -599,6 +686,23 @@ knob.addEventListener("pointerup", e=>{
   }
 });
 knob.addEventListener("pointercancel", ()=>{ dragId = null; resetKnob(); });
+
+/* ================= REGELINFO ================= */
+$("infoBtn").onclick = ()=>{
+  $("infoTitle").textContent = cfg.name;
+  $("infoSub").textContent = `${cfg.age} · ${cfg.periods} × ${cfg.min} min (${cfg.label})`;
+  const list = $("infoList");
+  list.innerHTML = "";
+  cfg.info.forEach(([label, text])=>{
+    const r = document.createElement("div");
+    r.className = "irow";
+    r.innerHTML = `<div class="ilabel">${label}</div><div class="itext">${text}</div>`;
+    list.appendChild(r);
+  });
+  $("infoModal").classList.add("active");
+};
+$("infoClose").onclick = ()=> $("infoModal").classList.remove("active");
+$("infoModal").onclick = e=>{ if(e.target.id==="infoModal") $("infoModal").classList.remove("active"); };
 
 /* ================= ÖVRIGT ================= */
 $("btnMain").onclick = mainButton;
