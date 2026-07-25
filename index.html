@@ -42,7 +42,7 @@
   /* ---------- STARTSKÄRM ---------- */
   #start{padding:20px 16px;overflow-y:auto}
   .brand{
-    position:relative;overflow:hidden;
+    position:relative;overflow:hidden;flex-shrink:0;
     background:linear-gradient(135deg,#005293,#003567);
     border-radius:20px;padding:22px 20px 18px;margin:4px 0 18px;
   }
@@ -53,9 +53,10 @@
   .updatebanner{
     display:block;width:100%;background:var(--run);color:#241D00;
     border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;
-    margin-bottom:14px;cursor:pointer;
+    margin-bottom:14px;cursor:pointer;flex-shrink:0;
   }
   .updatebanner[hidden]{display:none}
+  #formList{flex-shrink:0}
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:16px;margin-bottom:12px;
@@ -331,7 +332,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.6.0";
+const APP_VERSION = "1.6.1";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
