@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="domarklockan-ikon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="domarklockan-ikon.png">
 <!-- Reservikon (inbäddad) som visas i webbläsarfliken även om PNG-filen saknas -->
-<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="%230B1420"/><rect x="58" y="232" width="278" height="90" rx="45" fill="%23FFD60A"/><circle cx="330" cy="330" r="125" fill="%23FFD60A"/><rect x="336" y="200" width="56" height="92" fill="%230B1420"/><circle cx="332" cy="340" r="40" fill="%230B1420"/><circle cx="116" cy="190" r="28" fill="none" stroke="%23FFD60A" stroke-width="16"/></svg>'>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="%230B1420"/><circle cx="440" cy="215" r="33" fill="none" stroke="%23FFD60A" stroke-width="17"/><rect x="40" y="232" width="305" height="98" fill="%23FFD60A"/><circle cx="345" cy="335" r="130" fill="%23FFD60A"/><rect x="345" y="198" width="53" height="94" fill="%230B1420"/><circle cx="345" cy="335" r="68" fill="none" stroke="%230B1420" stroke-width="15"/></svg>'>
 <style>
   :root{
     --bg:#0B1420;
@@ -378,44 +378,80 @@
 
 <script type="application/json" id="changelog">
 [
-  {"v":"1.8.0","items":[
-    "Ändringslogg! När en ny version upptäcks visas nyheterna och du väljer själv om du vill uppdatera nu eller senare.",
-    "Tryck på versionsnumret på startsidan för att se hela ändringsloggen."
-  ]},
-  {"v":"1.7.0","items":[
-    "Matcher sparas nu automatiskt i telefonen och överlever att appen stängs – även av batterisparfunktioner.",
-    "Pågående matcher kan fortsättas från startsidan; gick klockan räknas tiden som passerat med.",
-    "Historik över tidigare matcher med slutresultat. Matcher tas bara bort medvetet via papperskorgen, med bekräftelse."
-  ]},
-  {"v":"1.6.1","items":[
-    "Fix: banderollen på startsidan kapades av på vissa telefoner."
-  ]},
-  {"v":"1.6.0","items":[
-    "Ny ?-knapp under match med regelsammanfattning för spelformen: spelplan, retreatlinje, fasta situationer, 4-målsregeln med mera.",
-    "Färgglad startsida i blågult med fotbollsplan och boll."
-  ]},
-  {"v":"1.5.0","items":[
-    "Tröjknappen visar nu vald färg på en riktig tröja, och paletten består av färgade tröjor.",
-    "Större minus- och tröjknappar."
-  ]},
-  {"v":"1.4.0","items":[
-    "Versionsnummer visas på startsidan.",
-    "Appen kollar själv efter nya versioner och visar en uppdateringsknapp."
-  ]},
-  {"v":"1.3.0","items":[
-    "Nytt skärmlås: stor låsknapp under klockan, gul låst-markering och svep-för-att-låsa-upp."
-  ]},
-  {"v":"1.2.0","items":[
-    "Fullskärmsläge utan adressfält på Android (manifest).",
-    "Appen låses till stående läge."
-  ]},
-  {"v":"1.1.0","items":[
-    "Visselpipe-ikon för hemskärmen.",
-    "Applås mot feltryck och val av tröjfärg för hemma- och bortalag."
-  ]},
-  {"v":"1.0.0","items":[
-    "Första versionen: matchklocka med alla nationella spelformer, ställning, periodhantering och högt larm när tiden är slut."
-  ]}
+  {
+    "v": "1.8.1",
+    "items": [
+      "Omdesignad hemskärmsikon efter klassisk domarpipa – rak framkant och fästring. Ta bort och lägg till appen på hemskärmen igen för att få nya ikonen."
+    ]
+  },
+  {
+    "v": "1.8.0",
+    "items": [
+      "Ändringslogg! När en ny version upptäcks visas nyheterna och du väljer själv om du vill uppdatera nu eller senare.",
+      "Tryck på versionsnumret på startsidan för att se hela ändringsloggen."
+    ]
+  },
+  {
+    "v": "1.7.0",
+    "items": [
+      "Matcher sparas nu automatiskt i telefonen och överlever att appen stängs – även av batterisparfunktioner.",
+      "Pågående matcher kan fortsättas från startsidan; gick klockan räknas tiden som passerat med.",
+      "Historik över tidigare matcher med slutresultat. Matcher tas bara bort medvetet via papperskorgen, med bekräftelse."
+    ]
+  },
+  {
+    "v": "1.6.1",
+    "items": [
+      "Fix: banderollen på startsidan kapades av på vissa telefoner."
+    ]
+  },
+  {
+    "v": "1.6.0",
+    "items": [
+      "Ny ?-knapp under match med regelsammanfattning för spelformen: spelplan, retreatlinje, fasta situationer, 4-målsregeln med mera.",
+      "Färgglad startsida i blågult med fotbollsplan och boll."
+    ]
+  },
+  {
+    "v": "1.5.0",
+    "items": [
+      "Tröjknappen visar nu vald färg på en riktig tröja, och paletten består av färgade tröjor.",
+      "Större minus- och tröjknappar."
+    ]
+  },
+  {
+    "v": "1.4.0",
+    "items": [
+      "Versionsnummer visas på startsidan.",
+      "Appen kollar själv efter nya versioner och visar en uppdateringsknapp."
+    ]
+  },
+  {
+    "v": "1.3.0",
+    "items": [
+      "Nytt skärmlås: stor låsknapp under klockan, gul låst-markering och svep-för-att-låsa-upp."
+    ]
+  },
+  {
+    "v": "1.2.0",
+    "items": [
+      "Fullskärmsläge utan adressfält på Android (manifest).",
+      "Appen låses till stående läge."
+    ]
+  },
+  {
+    "v": "1.1.0",
+    "items": [
+      "Visselpipe-ikon för hemskärmen.",
+      "Applås mot feltryck och val av tröjfärg för hemma- och bortalag."
+    ]
+  },
+  {
+    "v": "1.0.0",
+    "items": [
+      "Första versionen: matchklocka med alla nationella spelformer, ställning, periodhantering och högt larm när tiden är slut."
+    ]
+  }
 ]
 </script>
 <script>
@@ -423,7 +459,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.8.0";
+const APP_VERSION = "1.8.1";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
