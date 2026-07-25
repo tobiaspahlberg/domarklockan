@@ -60,3 +60,4 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 |---|---|
 | `index.html` | Hela appen i en enda fil |
 | `domarklockan-ikon.png` | Hemskärmsikonen (måste ligga i samma mapp) |
+| `manifest.json` | Gör att appen öppnas i fullskärm utan adressfält (måste ligga i samma mapp) |
