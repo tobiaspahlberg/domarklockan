@@ -44,6 +44,13 @@
   .brand{margin:8px 4px 20px}
   .brand h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
   .brand p{color:var(--dim);font-size:14px;margin-top:4px}
+  .ver{color:var(--dim);font-size:12px;margin-top:6px;opacity:.7}
+  .updatebanner{
+    display:block;width:100%;background:var(--run);color:#241D00;
+    border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;
+    margin-bottom:14px;cursor:pointer;
+  }
+  .updatebanner[hidden]{display:none}
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:16px;margin-bottom:12px;
@@ -193,7 +200,9 @@
   <div class="brand">
     <h1>Domarklockan</h1>
     <p>Välj spelform – speltider enligt Svensk fotbolls nationella spelformer</p>
+    <p class="ver" id="verLabel"></p>
   </div>
+  <button id="updateBanner" class="updatebanner" hidden></button>
   <div id="formList"></div>
 </div>
 
@@ -262,6 +271,12 @@
 </div>
 
 <script>
+/* ================= VERSION =================
+   Höj detta nummer varje gång en ny version laddas upp!
+   Appen jämför sitt eget nummer med det som ligger på servern
+   och visar en uppdateringsknapp om de skiljer sig. */
+const APP_VERSION = "1.4.0";
+
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
 const FORMS = [
@@ -597,11 +612,38 @@ function releaseWakeLock(){
 }
 document.addEventListener("visibilitychange", ()=>{
   // Om skärmen släckts och tänds igen: återta wake lock och synka klockan
-  if(document.visibilityState==="visible" && running){
-    requestWakeLock();
-    tick(); // synka direkt – tid som gått medan skärmen var släckt räknas med
+  if(document.visibilityState==="visible"){
+    if(running){
+      requestWakeLock();
+      tick(); // synka direkt – tid som gått medan skärmen var släckt räknas med
+    }
+    checkForUpdate(); // passa på att kolla om det finns en ny version
   }
 });
+
+/* ================= UPPDATERINGSKOLL =================
+   Hämtar en färsk kopia av sidan (förbi cachen) och läser av
+   versionsnumret. Skiljer det sig visas en knapp på startskärmen. */
+$("verLabel").textContent = "Version " + APP_VERSION;
+
+async function checkForUpdate(){
+  try{
+    const res = await fetch(location.pathname + "?u=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) return;
+    const txt = await res.text();
+    const m = txt.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if(m && m[1] !== APP_VERSION){
+      const b = $("updateBanner");
+      b.textContent = `Ny version ${m[1]} finns – tryck här för att uppdatera`;
+      b.hidden = false;
+    }
+  }catch(e){ /* offline – försök igen nästa gång appen öppnas */ }
+}
+$("updateBanner").onclick = ()=>{
+  // ?v=... tvingar telefonen att hämta sidan på nytt istället för ur cachen
+  location.href = location.pathname + "?v=" + Date.now();
+};
+checkForUpdate();
 
 buildStart();
 </script>
