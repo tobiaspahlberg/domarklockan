@@ -407,6 +407,14 @@
 <script type="application/json" id="changelog">
 [
   {
+    "v": "2.4.0",
+    "items": [
+      "Skärmen tänds nu automatiskt när larmet går, även om du släckt telefonen med sidoknappen. Appen visas direkt ovanpå låsskärmen.",
+      "Öppnas appen efter att larmet gått hoppar den direkt in i matchen istället för att visa startsidan.",
+      "Appen varnar om behörigheten för fullskärmslarm saknas (Android 14 och senare)."
+    ]
+  },
+  {
     "v": "2.3.5",
     "items": [
       "Visselpipan ligger nu i linje med rubriken."
@@ -561,7 +569,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "2.3.5";
+const APP_VERSION = "2.4.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -961,9 +969,13 @@ $("soundIgnore").onclick = ()=>{
   if(pendingStart){ const f = pendingStart; pendingStart = null; f(); }
 };
 $("soundOpen").onclick = async ()=>{
+  const target = $("soundOpen").dataset.target;
   $("soundModal").classList.remove("active");
   pendingStart = null; // domaren får trycka start igen efter inställningarna
-  try{ await AC.openSoundSettings(); }catch(e){}
+  try{
+    if(target === "fullscreen" && AC.openFullScreenSettings) await AC.openFullScreenSettings();
+    else await AC.openSoundSettings();
+  }catch(e){}
 };
 
 /* ================= BAKGRUNDSLARM (endast Android-appen) =================
@@ -994,17 +1006,24 @@ async function initNotifications(){
 }
 
 async function scheduleAlarm(secondsLeft, isBreak){
-  if(!LN || secondsLeft <= 0) return;
+  if(secondsLeft <= 0) return;
   await cancelAlarm();
   const last = period >= cfg.periods;
+  const title = isBreak ? "Dags för byte!" : (last ? "Full tid!" : `Period ${period} är slut!`);
+  const body  = isBreak ? `Period ${period} · Ställning ${home} – ${away}`
+                        : (last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`);
+  const at = Date.now() + secondsLeft*1000;
+  // Eget larm: tänder skärmen och visar appen även om telefonen är släckt
+  if(AC && AC.scheduleAlarmAt){
+    try{ await AC.scheduleAlarmAt({at, title, body}); return; }catch(e){}
+  }
+  if(!LN) return;
   try{
     await LN.schedule({notifications:[{
       id: NOTIF_ID,
       channelId: CHANNEL_ID,
-      title: isBreak ? "Dags för byte!" : (last ? "Full tid!" : `Period ${period} är slut!`),
-      body: isBreak ? `Period ${period} · Ställning ${home} – ${away}`
-                    : (last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`),
-      schedule: { at: new Date(Date.now() + secondsLeft*1000), allowWhileIdle: true },
+      title, body,
+      schedule: { at: new Date(at), allowWhileIdle: true },
       smallIcon: "ic_stat_icon",
       iconColor: "#FFD60A",
       ongoing: false
@@ -1013,8 +1032,8 @@ async function scheduleAlarm(secondsLeft, isBreak){
 }
 
 async function cancelAlarm(){
-  if(!LN) return;
-  try{ await LN.cancel({notifications:[{id: NOTIF_ID}]}); }catch(e){}
+  if(AC && AC.cancelAlarm){ try{ await AC.cancelAlarm(); }catch(e){} }
+  if(LN){ try{ await LN.cancel({notifications:[{id: NOTIF_ID}]}); }catch(e){} }
 }
 
 /* Kollar telefonens ljudläge och varnar en gång per match om något
@@ -1024,14 +1043,35 @@ async function soundCheckOk(action){
   if(!AC || soundWarned) return true;
   let s;
   try{ s = await AC.getSoundState(); }catch(e){ return true; }
-  if(!s || (!s.silent && !s.alarmMuted)) return true;
+  if(!s || (!s.silent && !s.alarmMuted && s.canWakeScreen !== false)) return true;
   soundWarned = true;
   pendingStart = action || null;
-  $("soundText").textContent = s.alarmMuted
-    ? "Larmvolymen är nerdragen till noll, så larmet kommer inte att höras. Vibrationen fungerar fortfarande."
-    : "Telefonen står på ljudlöst eller vibration. Larmet spelas via larmkanalen och bör höras ändå – men kontrollera gärna ljudet.";
+  if(s.canWakeScreen === false){
+    $("soundText").textContent =
+      "Appen får inte tända skärmen vid larm. Slå på \"Fullskärmsaviseringar\" så väcks telefonen automatiskt när perioden är slut.";
+    $("soundOpen").textContent = "Öppna inställningen";
+    $("soundOpen").dataset.target = "fullscreen";
+  } else {
+    $("soundOpen").textContent = "Öppna ljudinställningar";
+    $("soundOpen").dataset.target = "sound";
+    $("soundText").textContent = s.alarmMuted
+      ? "Larmvolymen är nerdragen till noll, så larmet kommer inte att höras. Vibrationen fungerar fortfarande."
+      : "Telefonen står på ljudlöst eller vibration. Larmet spelas via larmkanalen och bör höras ändå – men kontrollera gärna ljudet.";
+  }
   $("soundModal").classList.add("active");
   return false;
+}
+
+/* Om appen öppnas av larmet (eller startas efter att ha dödats) och det
+   finns en pågående match vars nästa händelse redan passerat: hoppa in i
+   matchen direkt så att domaren möts av larmet istället för startsidan. */
+function autoResumeIfDue(){
+  const list = loadAll();
+  const m = list.find(x => !x.matchOver && x.running && !x.alarmFired);
+  if(!m) return;
+  const passed = (Date.now() - m.savedAt)/1000;
+  const nextAt = (m.cfg.breakAt && !m.breakFired) ? m.cfg.breakAt : m.cfg.min*60;
+  if(m.elapsed + passed >= nextAt) resumeMatch(m.id);
 }
 
 initNotifications();
@@ -1294,6 +1334,8 @@ document.addEventListener("visibilitychange", ()=>{
   if(running){
     requestWakeLock();
     tick(); // synka direkt – tid som gått medan skärmen var släckt räknas med
+  } else if($("start").classList.contains("active")){
+    autoResumeIfDue(); // väcktes appen av ett larm? hoppa in i matchen
   }
   checkForUpdate(); // passa på att kolla om det finns en ny version
 });
@@ -1379,6 +1421,7 @@ checkForUpdate();
 
 buildStart();
 renderMatchLists();
+autoResumeIfDue();
 </script>
 </body>
 </html>
