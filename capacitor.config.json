@@ -1,0 +1,14 @@
+{
+  "appId": "se.domarklockan.app",
+  "appName": "Domarklockan",
+  "webDir": "docs",
+  "android": {
+    "backgroundColor": "#0B1420"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#FFD60A"
+    }
+  }
+}

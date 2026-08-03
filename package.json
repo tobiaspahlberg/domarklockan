@@ -1,0 +1,26 @@
+{
+  "name": "domarklockan",
+  "version": "1.0.0",
+  "description": "En enkel matchklocka för unga fotbollsdomare. Byggd för svensk barn- och ungdomsfotboll med de nationella spelformernas officiella speltider.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-personal:tobiaspahlberg/domarklockan.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/local-notifications": "^8.2.1"
+  }
+}

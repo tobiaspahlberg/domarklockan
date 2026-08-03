@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Android (byggresultat och lokala inställningar)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/src/main/assets/public/
+android/app/src/main/res/xml/config.xml
+*.apk
+*.aab
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# System
+.DS_Store
+Thumbs.db
