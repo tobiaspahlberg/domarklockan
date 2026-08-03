@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ladda ner Domarklockan</title>
+<meta name="theme-color" content="#0B1420">
+<link rel="apple-touch-icon" href="domarklockan-ikon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="domarklockan-ikon.png">
+<style>
+  :root{--bg:#0B1420;--surface:#14202F;--surface-2:#1B2A3C;--line:#26374B;
+        --text:#F5F7F4;--dim:#8FA0B3;--run:#FFD60A;--go:#35C46A}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);min-height:100vh;
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       padding:24px 16px 48px;line-height:1.55}
+  .wrap{max-width:520px;margin:0 auto}
+  .hero{position:relative;background:linear-gradient(135deg,#005293,#003567);
+        border-radius:20px;padding:24px 20px;overflow:hidden;margin-bottom:22px}
+  .hero h1{font-size:28px;font-weight:800;color:#fff;padding-right:80px}
+  .hero p{color:#BFD7EE;font-size:14px;margin-top:4px;padding-right:80px}
+  .whistle{position:absolute;right:20px;top:22px;width:64px}
+  a.btn{display:block;text-align:center;text-decoration:none;border-radius:16px;
+        padding:18px;font-size:18px;font-weight:800;margin-bottom:10px}
+  a.apk{background:var(--go);color:#08110B}
+  a.web{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+  h2{font-size:17px;margin:26px 0 8px}
+  ol,ul{padding-left:20px}
+  li{margin-bottom:7px;font-size:15px}
+  .note{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+        padding:14px 16px;font-size:14px;color:var(--dim);margin-top:22px}
+  .note b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <svg class="whistle" viewBox="22 152 486 340" aria-hidden="true">
+      <circle cx="440" cy="215" r="33" fill="none" stroke="#FECC02" stroke-width="34"/>
+      <rect x="40" y="232" width="305" height="98" fill="#FECC02"/>
+      <circle cx="345" cy="335" r="130" fill="#FECC02"/>
+      <rect x="345" y="190" width="53" height="102" fill="#00396D"/>
+      <circle cx="345" cy="335" r="68" fill="none" stroke="#00396D" stroke-width="16"/>
+    </svg>
+    <h1>Domarklockan</h1>
+    <p>Matchklocka för ungdomsfotboll</p>
+  </div>
+
+  <!-- ÄNDRA ANVANDARE/REPO till ditt GitHub-användarnamn och repo-namn -->
+  <a class="btn apk" href="https://github.com/ANVANDARE/REPO/releases/latest/download/Domarklockan.apk">
+    ⬇ Ladda ner appen (Android)
+  </a>
+  <a class="btn web" href="./">Öppna webbversionen (iPhone)</a>
+
+  <h2>Installera på Android</h2>
+  <ol>
+    <li>Tryck på nedladdningsknappen ovan</li>
+    <li>Öppna filen när den laddats ner</li>
+    <li>Godkänn <b>installation från okänd källa</b> om telefonen frågar</li>
+    <li>Tryck på <b>Installera</b></li>
+  </ol>
+  <p style="font-size:14px;color:var(--dim);margin-top:8px">
+    Android-appen larmar även när skärmen är släckt eller telefonen ligger i fickan.
+  </p>
+
+  <h2>iPhone</h2>
+  <ol>
+    <li>Öppna webbversionen i <b>Safari</b></li>
+    <li>Tryck på dela-knappen längst ner</li>
+    <li>Välj <b>Lägg till på hemskärmen</b></li>
+  </ol>
+  <p style="font-size:14px;color:var(--dim);margin-top:8px">
+    På iPhone hörs larmet bara när appen är öppen på skärmen – använd applåset
+    i stället för att låsa telefonen under perioderna.
+  </p>
+
+  <div class="note">
+    <b>Uppdateringar:</b> länken pekar alltid på den senaste versionen.
+    Ladda bara ner igen och installera ovanpå – matcher och historik finns kvar.
+  </div>
+
+</div>
+</body>
+</html>
