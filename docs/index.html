@@ -46,10 +46,15 @@
     background:linear-gradient(135deg,#005293,#003567);
     border-radius:20px;padding:22px 20px 18px;margin:4px 0 18px;
   }
-  .brand h1{font-size:28px;font-weight:800;letter-spacing:-.02em;color:#fff;position:relative}
-  .brand p{color:#BFD7EE;font-size:14px;margin-top:4px;max-width:30ch;position:relative}
-  .ver{color:#8FB4D9;font-size:12px;margin-top:8px;position:relative}
+  .brand h1{font-size:28px;font-weight:800;letter-spacing:-.02em;color:#fff;position:relative;padding-right:80px}
+  .brand p{color:#BFD7EE;font-size:14px;margin-top:4px;max-width:34ch;position:relative;padding-right:80px}
+  .ver{color:#8FB4D9;font-size:12px;margin-top:8px;position:relative;padding-right:0}
   .pitchdeco{position:absolute;right:-34px;top:-18px;width:200px;pointer-events:none}
+  .whistledeco{
+    position:absolute;right:20px;top:22px;
+    width:64px;pointer-events:none;
+  }
+  @media (max-width:360px){ .whistledeco{width:52px;right:14px} }
   .updatebanner{
     display:block;width:100%;background:var(--run);color:#241D00;
     border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;
@@ -148,6 +153,7 @@
   .pseg.done{background:var(--dim)}
   .pseg .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--run)}
   .pseg.overtime .fill{background:var(--over)}
+  .pseg .brk{position:absolute;top:0;bottom:0;width:2px;background:var(--bg);opacity:.85}
   .plabel{text-align:center;color:var(--dim);font-size:14px;font-weight:600;margin-top:8px}
 
   .clockwrap{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0}
@@ -263,17 +269,22 @@
 <div id="start" class="screen active">
   <div class="brand">
     <svg class="pitchdeco" viewBox="0 0 200 140" aria-hidden="true">
-      <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity=".3">
+      <g stroke="#FFFFFF" stroke-width="2" fill="none" opacity=".22">
         <rect x="10" y="10" width="180" height="120" rx="4"/>
         <line x1="100" y1="10" x2="100" y2="130"/>
         <circle cx="100" cy="70" r="24"/>
         <rect x="10" y="45" width="26" height="50"/>
       </g>
-      <circle cx="150" cy="48" r="15" fill="#FECC02"/>
-      <path d="M150 38l7 5-2.7 8.5h-8.6L143 43z" fill="#005293"/>
+    </svg>
+    <svg class="whistledeco" viewBox="22 152 486 340" aria-hidden="true">
+      <circle cx="440" cy="215" r="33" fill="none" stroke="#FECC02" stroke-width="34"/>
+      <rect x="40" y="232" width="305" height="98" fill="#FECC02"/>
+      <circle cx="345" cy="335" r="130" fill="#FECC02"/>
+      <rect x="345" y="190" width="53" height="102" fill="#00396D"/>
+      <circle cx="345" cy="335" r="68" fill="none" stroke="#00396D" stroke-width="16"/>
     </svg>
     <h1>Domarklockan</h1>
-    <p>Välj spelform – speltider enligt Svensk fotbolls nationella spelformer</p>
+    <p>Officiella speltider för alla spelformer</p>
     <p class="ver" id="verLabel"></p>
   </div>
   <button id="updateBanner" class="updatebanner" hidden></button>
@@ -396,6 +407,43 @@
 <script type="application/json" id="changelog">
 [
   {
+    "v": "2.3.5",
+    "items": [
+      "Visselpipan ligger nu i linje med rubriken."
+    ]
+  },
+  {
+    "v": "2.3.4",
+    "items": [
+      "Balanserad startsida: visselpipan sitter högre och undertexten ryms på två rader."
+    ]
+  },
+  {
+    "v": "2.3.3",
+    "items": [
+      "Fix: visselpipan på startsidan hamnade delvis utanför banderollen."
+    ]
+  },
+  {
+    "v": "2.3.2",
+    "items": [
+      "Visselpipan ersätter fotbollen på startsidan."
+    ]
+  },
+  {
+    "v": "2.3.1",
+    "items": [
+      "Ny fotboll på startsidan – nu med riktiga femhörningar."
+    ]
+  },
+  {
+    "v": "2.3.0",
+    "items": [
+      "3 mot 3: appen larmar och pausar klockan automatiskt vid det inbyggda bytet efter 1.30 i varje period.",
+      "Snyggare fotboll på startsidan."
+    ]
+  },
+  {
     "v": "2.2.0",
     "items": [
       "Bakåtknappen navigerar nu inne i appen: stänger rutor, går från matchvyn till startsidan, och kastar inte längre ut dig mitt i en match.",
@@ -513,18 +561,19 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.3.5";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
 const FORMS = [
   { name:"3 mot 3",  age:"6–7 år",
-    variants:[{label:"Match", periods:4, min:3}],
+    variants:[{label:"Match", periods:4, min:3, breakAt:90}],
     info:[
       ["Spelplan & boll","15 × 10–12 m – använd sarg om det finns. Mål max 1,6 × 1,15 m. Bollstorlek 3."],
       ["Spelare","Tre per lag, ingen målvakt. Fria byten."],
       ["Fasta situationer","Avspark, sidlinjespark, hörna och frispark sätts alla igång genom att driva eller passa bollen längs marken. Motståndarna håller 3 m avstånd. Allt är indirekt – bollen får inte skjutas direkt i mål. Straff och inkast används inte."],
       ["Kort","Gula och röda kort används inte. Vid olämpligt uppträdande byts spelaren av."],
+      ["Byte","Varje period har ett inbyggt byte efter 1.30. Appen larmar och pausar klockan automatiskt."],
       ["4-målsregeln","Ligger ett lag under med fyra mål eller mer får det sätta in en extra spelare (fyra) tills ställningen är utjämnad."]
     ]},
   { name:"5 mot 5",  age:"8–9 år",
@@ -572,6 +621,7 @@ let period = 1;          // aktuell period (1-baserad)
 let elapsed = 0;         // sekunder i aktuell period
 let running = false;
 let alarmFired = false;  // larmet har gått för denna period
+let breakFired = false;  // bytespausen har utlösts i denna period (3 mot 3)
 let matchOver = false;
 let home = 0, away = 0;
 let tickTimer = null, lastTs = 0;
@@ -607,7 +657,7 @@ function saveAll(list){
 }
 function snapshot(){
   return { id: currentId, createdAt, savedAt: Date.now(),
-    cfg, period, elapsed, running, alarmFired, matchOver, home, away,
+    cfg, period, elapsed, running, alarmFired, breakFired, matchOver, home, away,
     colors: {home: teamHex.home, away: teamHex.away} };
 }
 function saveCurrent(){
@@ -649,8 +699,9 @@ function buildStart(){
 
 function startMatch(form, variant){
   cfg = { name: form.name, label: variant.label, periods: variant.periods, min: variant.min,
-          age: form.age, info: form.info };
+          breakAt: variant.breakAt || 0, age: form.age, info: form.info };
   period = 1; elapsed = 0; running = false; alarmFired = false; matchOver = false;
+  breakFired = false;
   home = 0; away = 0;
   currentId = Date.now(); createdAt = currentId;
   resetColors();
@@ -667,7 +718,7 @@ function resumeMatch(id){
   initAudio(); // knapptryckning = tillfälle att aktivera ljudet
   currentId = m.id; createdAt = m.createdAt;
   cfg = m.cfg; period = m.period; elapsed = m.elapsed;
-  alarmFired = m.alarmFired; matchOver = m.matchOver;
+  alarmFired = m.alarmFired; breakFired = !!m.breakFired; matchOver = m.matchOver;
   home = m.home; away = m.away;
   resetColors();
   if(m.colors){
@@ -681,6 +732,14 @@ function resumeMatch(id){
   if(m.running && !alarmFired && !matchOver){
     // Klockan gick när appen stängdes – räkna med tiden som passerat i verkligheten
     elapsed = elapsed + (Date.now() - m.savedAt)/1000;
+    // Hann bytet passera medan appen var stängd?
+    if(cfg.breakAt && !breakFired && elapsed >= cfg.breakAt){
+      elapsed = cfg.breakAt;
+      render();
+      fireBreak();
+      saveCurrent();
+      return;
+    }
     if(elapsed >= target){
       elapsed = target;
       render();
@@ -775,6 +834,12 @@ function buildSegs(){
     const seg = document.createElement("div");
     seg.className = "pseg";
     seg.innerHTML = `<div class="fill"></div>`;
+    if(cfg.breakAt){
+      const brk = document.createElement("div");
+      brk.className = "brk";
+      brk.style.left = (cfg.breakAt/(cfg.min*60)*100) + "%";
+      seg.appendChild(brk);
+    }
     wrap.appendChild(seg);
   }
 }
@@ -820,7 +885,9 @@ function render(){
     b.textContent = (period < cfg.periods) ? `Starta period ${period+1}` : "Avsluta matchen";
     b.className = "bigbtn start";
   } else {
-    b.textContent = elapsed>0 ? "Fortsätt" : `Starta period ${period}`;
+    const afterBreak = breakFired && cfg.breakAt && elapsed <= cfg.breakAt + 1;
+    b.textContent = afterBreak ? "Fortsätt efter bytet"
+                  : (elapsed>0 ? "Fortsätt" : `Starta period ${period}`);
     b.className = "bigbtn start";
   }
 }
@@ -831,6 +898,12 @@ function tick(){
   elapsed += (now - lastTs)/1000;   // klarar att fliken/telefonen strular en stund
   lastTs = now;
   const target = cfg.min*60;
+  // Inbyggt byte mitt i perioden (3 mot 3)
+  if(cfg.breakAt && !breakFired && !alarmFired && elapsed >= cfg.breakAt){
+    elapsed = cfg.breakAt;
+    fireBreak();
+    return;
+  }
   if(!alarmFired && elapsed >= target){
     elapsed = target;
     fireAlarm();
@@ -847,7 +920,9 @@ function startClock(){
   render();
   saveCurrent();
   setLocked(true); // nu åker telefonen ner i fickan – lås direkt
-  scheduleAlarm(cfg.min*60 - elapsed); // systemlarm vid periodens slut
+  // Systemlarm till nästa händelse: bytet om det ligger före periodens slut
+  const nextAt = (cfg.breakAt && !breakFired) ? cfg.breakAt : cfg.min*60;
+  scheduleAlarm(nextAt - elapsed, cfg.breakAt && !breakFired);
 }
 function stopClock(){
   running = false;
@@ -865,7 +940,7 @@ async function mainButton(){
   if(alarmFired){
     // Gå vidare till nästa period eller avsluta
     if(period < cfg.periods){
-      const go = ()=>{ period++; elapsed = 0; alarmFired = false; startClock(); };
+      const go = ()=>{ period++; elapsed = 0; alarmFired = false; breakFired = false; startClock(); };
       if(!await soundCheckOk(go)) return;
       go();
     } else {
@@ -918,7 +993,7 @@ async function initNotifications(){
   }catch(e){}
 }
 
-async function scheduleAlarm(secondsLeft){
+async function scheduleAlarm(secondsLeft, isBreak){
   if(!LN || secondsLeft <= 0) return;
   await cancelAlarm();
   const last = period >= cfg.periods;
@@ -926,8 +1001,9 @@ async function scheduleAlarm(secondsLeft){
     await LN.schedule({notifications:[{
       id: NOTIF_ID,
       channelId: CHANNEL_ID,
-      title: last ? "Full tid!" : `Period ${period} är slut!`,
-      body: last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`,
+      title: isBreak ? "Dags för byte!" : (last ? "Full tid!" : `Period ${period} är slut!`),
+      body: isBreak ? `Period ${period} · Ställning ${home} – ${away}`
+                    : (last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`),
       schedule: { at: new Date(Date.now() + secondsLeft*1000), allowWhileIdle: true },
       smallIcon: "ic_stat_icon",
       iconColor: "#FFD60A",
@@ -985,6 +1061,18 @@ function beep(){
   if(navigator.vibrate) navigator.vibrate([400,150,400]);
 }
 
+function fireBreak(){
+  breakFired = true;
+  stopClock();
+  if(locked) setLocked(false); // lås upp så larmet kan stängas av
+  $("alarmTitle").textContent = "Dags för byte!";
+  $("alarmSub").textContent = `Period ${period} · ${fmt(cfg.breakAt)} spelad · Ställning ${home} – ${away}`;
+  $("alarmOverlay").classList.add("active");
+  beep();
+  alarmTimer = setInterval(beep, 1400);
+  saveCurrent();
+}
+
 function fireAlarm(){
   alarmFired = true;
   stopClock();
@@ -1012,7 +1100,10 @@ $("btnDismiss").onclick = ()=>{
 function goalChanged(){
   render(); saveCurrent();
   // Notisen visar ställningen – schemalägg om den så texten stämmer
-  if(running && !alarmFired) scheduleAlarm(cfg.min*60 - elapsed);
+  if(running && !alarmFired){
+    const nextAt = (cfg.breakAt && !breakFired) ? cfg.breakAt : cfg.min*60;
+    scheduleAlarm(nextAt - elapsed, cfg.breakAt && !breakFired);
+  }
 }
 $("homeTeam").onclick = e=>{ if(e.target.id!=="homeMinus"){ home++; goalChanged(); } };
 $("awayTeam").onclick = e=>{ if(e.target.id!=="awayMinus"){ away++; goalChanged(); } };
