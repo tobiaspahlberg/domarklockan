@@ -107,11 +107,11 @@
   #infoBtn:active{background:#243347}
 
   /* Regelinfo-modal */
-  #infoModal, #logModal{
+  #infoModal, #logModal, #soundModal{
     position:fixed;inset:0;background:rgba(11,20,32,.88);
     display:none;justify-content:center;align-items:center;z-index:20;padding:20px;
   }
-  #infoModal.active, #logModal.active{display:flex}
+  #infoModal.active, #logModal.active, #soundModal.active{display:flex}
   .infobox{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:20px;max-width:430px;width:100%;max-height:82vh;overflow-y:auto;
@@ -330,6 +330,18 @@
   </div>
 </div>
 
+<!-- LJUDVARNING (Android-appen) -->
+<div id="soundModal">
+  <div class="infobox">
+    <h3>🔇 Kontrollera ljudet</h3>
+    <div class="itext" id="soundText" style="margin:10px 0 4px"></div>
+    <div class="logbtns">
+      <button class="iclose" id="soundIgnore">Starta ändå</button>
+      <button class="doupdate" id="soundOpen">Öppna ljudinställningar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ÄNDRINGSLOGG / UPPDATERING -->
 <div id="logModal">
   <div class="infobox">
@@ -371,6 +383,19 @@
 
 <script type="application/json" id="changelog">
 [
+  {
+    "v": "2.1.0",
+    "items": [
+      "Larmet går nu via telefonens larmkanal – det hörs och vibrerar även när telefonen står på ljudlöst eller vibration.",
+      "Appen varnar om telefonen är tystad eller larmvolymen nerdragen när en period startas, med genväg till ljudinställningarna."
+    ]
+  },
+  {
+    "v": "2.0.1",
+    "items": [
+      "Fix: bakgrundslarmet visades men lät inte – notiskanalen hade fel ljudinställning."
+    ]
+  },
   {
     "v": "2.0.0",
     "items": [
@@ -468,7 +493,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.1.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -809,15 +834,16 @@ function stopClock(){
   saveCurrent();
 }
 
-function mainButton(){
+async function mainButton(){
   initAudio(); // måste skapas vid en knapptryckning (krav i iOS/Android)
   if(matchOver){ renderMatchLists(); showScreen("start"); return; }
   if(running){ stopClock(); return; }
   if(alarmFired){
     // Gå vidare till nästa period eller avsluta
     if(period < cfg.periods){
-      period++; elapsed = 0; alarmFired = false;
-      startClock();
+      const go = ()=>{ period++; elapsed = 0; alarmFired = false; startClock(); };
+      if(!await soundCheckOk(go)) return;
+      go();
     } else {
       matchOver = true;
       releaseWakeLock();
@@ -826,8 +852,20 @@ function mainButton(){
     }
     return;
   }
+  if(!await soundCheckOk(startClock)) return;
   startClock();
 }
+
+/* Knapparna i ljudvarningen */
+$("soundIgnore").onclick = ()=>{
+  $("soundModal").classList.remove("active");
+  if(pendingStart){ const f = pendingStart; pendingStart = null; f(); }
+};
+$("soundOpen").onclick = async ()=>{
+  $("soundModal").classList.remove("active");
+  pendingStart = null; // domaren får trycka start igen efter inställningarna
+  try{ await AC.openSoundSettings(); }catch(e){}
+};
 
 /* ================= BAKGRUNDSLARM (endast Android-appen) =================
    När appen körs som riktig app schemaläggs en systemnotis exakt vid
@@ -835,24 +873,23 @@ function mainButton(){
    stängts av systemet. I webbläsaren händer inget av detta. */
 const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const LN = NATIVE ? window.Capacitor.Plugins.LocalNotifications : null;
+const AC = NATIVE ? window.Capacitor.Plugins.AlarmChannel : null;
 const NOTIF_ID = 4711;
+// Kanalen skapas på Android-sidan och använder LARM-ljudströmmen, så att
+// larmet hörs även när telefonen står på ljudlöst eller vibration.
+const CHANNEL_ID = "domarklockan-alarm";
 
 async function initNotifications(){
   if(!LN) return;
   try{
     const perm = await LN.checkPermissions();
     if(perm.display !== "granted") await LN.requestPermissions();
-    // Egen kanal så larmet låter högt och kringgår ljudlöst läge så gott det går
-    if(LN.createChannel){
-      await LN.createChannel({
-        id: "domarklockan-larm",
-        name: "Matchlarm",
-        description: "Larm när en period tar slut",
-        importance: 5,        // högsta – visas som popup och låter
-        visibility: 1,
-        vibration: true,
-        sound: "default"
-      });
+    if(AC) await AC.createAlarmChannel();
+    // Städa bort tidigare versioners tysta kanaler
+    if(LN.deleteChannel){
+      for(const id of ["domarklockan-larm", "domarklockan-larm-2"]){
+        try{ await LN.deleteChannel({id}); }catch(e){}
+      }
     }
   }catch(e){}
 }
@@ -864,7 +901,7 @@ async function scheduleAlarm(secondsLeft){
   try{
     await LN.schedule({notifications:[{
       id: NOTIF_ID,
-      channelId: "domarklockan-larm",
+      channelId: CHANNEL_ID,
       title: last ? "Full tid!" : `Period ${period} är slut!`,
       body: last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`,
       schedule: { at: new Date(Date.now() + secondsLeft*1000), allowWhileIdle: true },
@@ -878,6 +915,23 @@ async function scheduleAlarm(secondsLeft){
 async function cancelAlarm(){
   if(!LN) return;
   try{ await LN.cancel({notifications:[{id: NOTIF_ID}]}); }catch(e){}
+}
+
+/* Kollar telefonens ljudläge och varnar en gång per match om något
+   skulle kunna göra att domaren missar larmet. */
+let soundWarned = false, pendingStart = null;
+async function soundCheckOk(action){
+  if(!AC || soundWarned) return true;
+  let s;
+  try{ s = await AC.getSoundState(); }catch(e){ return true; }
+  if(!s || (!s.silent && !s.alarmMuted)) return true;
+  soundWarned = true;
+  pendingStart = action || null;
+  $("soundText").textContent = s.alarmMuted
+    ? "Larmvolymen är nerdragen till noll, så larmet kommer inte att höras. Vibrationen fungerar fortfarande."
+    : "Telefonen står på ljudlöst eller vibration. Larmet spelas via larmkanalen och bör höras ändå – men kontrollera gärna ljudet.";
+  $("soundModal").classList.add("active");
+  return false;
 }
 
 initNotifications();
