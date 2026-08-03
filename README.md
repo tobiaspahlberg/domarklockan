@@ -44,10 +44,11 @@ Appen ligger sedan bland de andra apparna med visselpipe-ikonen och öppnas i fu
 
 ### Låsläge (mot feltryck)
 
-- Tryck på **🔓 Lås skärmen** under klockan – klockan syns och går, men inga tryck registreras
-- När skärmen är låst visas en gul **🔒 Skärmen är låst**-markering högst upp
+- Skärmen **låses automatiskt** när en period startas eller fortsätter – det är då telefonen åker ner i fickan. Klockan syns och går, men inga tryck registreras
+- När skärmen är låst visas en gul **🔒 Låst under period**-markering högst upp
 - **Lås upp:** dra det gula reglaget längst ner hela vägen åt höger, som ett vanligt skärmlås
-- När larmet går låses skärmen upp automatiskt så att ljudet kan stängas av
+- Låser du upp mitt i en period (t.ex. för att fylla i ett mål) låses skärmen igen automatiskt efter 20 sekunder
+- Skärmen låses upp när perioden pausas och när larmet går, så att ljudet kan stängas av
 
 ## Bra att veta
 

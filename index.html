@@ -230,12 +230,6 @@
   .swatch:active{transform:scale(.92)}
 
   /* Låsläge */
-  #lockBtn{
-    margin-top:16px;
-    background:var(--surface-2);border:1px solid var(--line);border-radius:999px;
-    color:var(--dim);font-size:16px;font-weight:600;padding:12px 26px;cursor:pointer;
-  }
-  #lockBtn:active{background:#243347}
   #lockOverlay{
     position:fixed;inset:0;z-index:15;display:none;
     background:rgba(11,20,32,.3);touch-action:none;
@@ -301,7 +295,6 @@
   <div class="clockwrap">
     <div class="clock" id="clock">00:00</div>
     <div class="clocksub" id="clockSub"></div>
-    <button id="lockBtn">🔓 Lås skärmen</button>
   </div>
 
   <div class="score">
@@ -330,7 +323,7 @@
 <!-- LARM -->
 <!-- LÅST LÄGE: fångar alla tryck, svep för att låsa upp -->
 <div id="lockOverlay">
-  <div id="lockChip">🔒 Skärmen är låst</div>
+  <div id="lockChip">🔒 Låst under period</div>
   <div id="slideTrack">
     <div id="slideText">Dra för att låsa upp&nbsp;→</div>
     <div id="slideKnob">🔓</div>
@@ -378,6 +371,14 @@
 
 <script type="application/json" id="changelog">
 [
+  {
+    "v": "1.9.0",
+    "items": [
+      "Skärmen låses nu automatiskt när en period startas eller fortsätter – knappen 'Lås skärmen' behövs inte längre.",
+      "Låser du upp mitt i en period för att fylla i mål låses skärmen igen automatiskt efter 20 sekunder.",
+      "Skärmen låses upp när perioden pausas och när larmet går."
+    ]
+  },
   {
     "v": "1.8.1",
     "items": [
@@ -459,7 +460,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.8.1";
+const APP_VERSION = "1.9.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -788,10 +789,12 @@ function startClock(){
   requestWakeLock();
   render();
   saveCurrent();
+  setLocked(true); // nu åker telefonen ner i fickan – lås direkt
 }
 function stopClock(){
   running = false;
   clearInterval(tickTimer);
+  clearTimeout(relockTimer);
   render();
   saveCurrent();
 }
@@ -925,13 +928,18 @@ $("colorModal").onclick = e=>{ if(e.target.id==="colorModal") $("colorModal").cl
    Låser alla tryck på skärmen. Dra reglaget åt höger för att låsa upp,
    som ett vanligt skärmlås. */
 let locked = false;
+let relockTimer = null;
+const RELOCK_MS = 20000; // lås igen 20 s efter att man låst upp under pågående period
 
 function setLocked(v){
   locked = v;
   $("lockOverlay").classList.toggle("active", v);
   resetKnob();
+  clearTimeout(relockTimer);
+  // Har man låst upp mitt i en pågående period (t.ex. för att fylla i mål)
+  // låses skärmen igen automatiskt när man slutat pilla en stund.
+  if(!v && running) relockTimer = setTimeout(()=>{ if(running) setLocked(true); }, RELOCK_MS);
 }
-$("lockBtn").onclick = ()=> setLocked(true);
 
 const knob = $("slideKnob"), track = $("slideTrack");
 let dragId = null, grabX = 0;
