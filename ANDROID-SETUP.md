@@ -11,7 +11,7 @@ Guide för att paketera den befintliga webbappen som en riktig Android-app med C
 | Verktyg | Kommentar |
 |---|---|
 | Android Studio | Du har det redan installerat |
-| Node.js LTS (20 eller senare) | Ladda ner från nodejs.org. Kontrollera med `node -v` |
+| Node.js 24 (LTS) | Capacitor kräver minst Node 22. Ladda ner från nodejs.org, kontrollera med `node -v` |
 | JDK 21 | Följer med Android Studio – ingen separat installation behövs |
 
 Har du kört Capacitor-kommandon i ett annat projekt tidigare spelar det ingen roll: paketen installeras per projekt.
@@ -130,5 +130,7 @@ Den koden bygger vi in i `index.html` som nästa steg – den aktiveras bara nä
 **Gradle-bygget misslyckas i molnet men fungerar lokalt** – kontrollera att `android/`-mappen och `package-lock.json` verkligen är incheckade i repot.
 
 **Telefonen vägrar installera APK:n** – tillåt installation från okänd källa för filhanteraren, och se signeringsnoten i steg 6.
+
+**Molnbygget klagar på Node-versionen** – `The Capacitor CLI requires NodeJS >=22`. Kontrollera att `node-version` i workflow-filen står på `'22'` eller högre.
 
 **Appen visar en gammal version** – kör `npx cap sync android` innan bygget; webbfilerna kopieras in i Android-projektet vid sync, inte automatiskt.
