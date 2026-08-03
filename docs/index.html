@@ -107,11 +107,11 @@
   #infoBtn:active{background:#243347}
 
   /* Regelinfo-modal */
-  #infoModal, #logModal, #soundModal{
+  #infoModal, #logModal, #soundModal, #exitModal{
     position:fixed;inset:0;background:rgba(11,20,32,.88);
     display:none;justify-content:center;align-items:center;z-index:20;padding:20px;
   }
-  #infoModal.active, #logModal.active, #soundModal.active{display:flex}
+  #infoModal.active, #logModal.active, #soundModal.active, #exitModal.active{display:flex}
   .infobox{
     background:var(--surface);border:1px solid var(--line);border-radius:16px;
     padding:20px;max-width:430px;width:100%;max-height:82vh;overflow-y:auto;
@@ -330,6 +330,18 @@
   </div>
 </div>
 
+<!-- AVSLUTA APPEN -->
+<div id="exitModal">
+  <div class="infobox">
+    <h3>Avsluta Domarklockan?</h3>
+    <div class="itext" id="exitText" style="margin:10px 0 4px">Pågående matcher sparas och finns kvar nästa gång du öppnar appen.</div>
+    <div class="logbtns">
+      <button class="iclose" id="exitCancel">Avbryt</button>
+      <button class="doupdate" id="exitConfirm">Avsluta</button>
+    </div>
+  </div>
+</div>
+
 <!-- LJUDVARNING (Android-appen) -->
 <div id="soundModal">
   <div class="infobox">
@@ -383,6 +395,14 @@
 
 <script type="application/json" id="changelog">
 [
+  {
+    "v": "2.2.0",
+    "items": [
+      "Bakåtknappen navigerar nu inne i appen: stänger rutor, går från matchvyn till startsidan, och kastar inte längre ut dig mitt i en match.",
+      "På startsidan frågar appen om du verkligen vill avsluta.",
+      "Tryck var som helst på en pågående match för att fortsätta den – inte bara på Fortsätt-knappen."
+    ]
+  },
   {
     "v": "2.1.0",
     "items": [
@@ -493,7 +513,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -704,17 +724,21 @@ function renderMatchLists(){
           <div class="mmeta">${meta}</div>
         </div>`;
       if(isOngoing){
+        // Hela raden går att trycka på för att fortsätta matchen
+        row.style.cursor = "pointer";
+        row.onclick = ()=> resumeMatch(m.id);
         const b = document.createElement("button");
         b.className = "mbtn resume";
         b.textContent = "Fortsätt";
-        b.onclick = ()=> resumeMatch(m.id);
+        b.onclick = e=>{ e.stopPropagation(); resumeMatch(m.id); };
         row.appendChild(b);
       }
       const d = document.createElement("button");
       d.className = "mbtn del";
       d.textContent = "🗑";
       d.title = "Ta bort matchen";
-      d.onclick = ()=>{
+      d.onclick = e=>{
+        e.stopPropagation(); // ska inte öppna matchen
         if(confirm(`Ta bort matchen ${m.cfg.name} (${m.home}–${m.away})? Det går inte att ångra.`)){
           deleteMatch(m.id);
         }
@@ -1120,6 +1144,42 @@ $("btnBack").onclick = ()=>{
   releaseWakeLock();
   renderMatchLists();
   showScreen("start");
+};
+
+/* ================= ANDROIDS BAKÅTKNAPP =================
+   Bakåtknappen ska navigera inne i appen, inte kasta ut domaren mitt i
+   en match. Först stängs öppna rutor, sedan går man från matchvyn till
+   startsidan, och först på startsidan frågar appen om man vill avsluta. */
+const APP = NATIVE ? window.Capacitor.Plugins.App : null;
+
+function goBack(){
+  // 1. Låst skärm: bakåtknappen ska inte kunna göra något alls
+  if(locked) return;
+
+  // 2. Öppna rutor stängs en i taget
+  const modals = ["exitModal","soundModal","logModal","infoModal","colorModal"];
+  for(const id of modals){
+    const el = $(id);
+    if(el && el.classList.contains("active")){ el.classList.remove("active"); return; }
+  }
+
+  // 3. Pågående larm: bakåt stänger av det
+  if($("alarmOverlay").classList.contains("active")){ $("btnDismiss").click(); return; }
+
+  // 4. I matchvyn: tillbaka till startsidan (matchen sparas)
+  if($("match").classList.contains("active")){ $("btnBack").click(); return; }
+
+  // 5. På startsidan: fråga om appen ska avslutas
+  $("exitModal").classList.add("active");
+}
+
+if(APP && APP.addListener){
+  APP.addListener("backButton", goBack);
+}
+$("exitCancel").onclick = ()=> $("exitModal").classList.remove("active");
+$("exitConfirm").onclick = ()=>{
+  $("exitModal").classList.remove("active");
+  if(APP && APP.exitApp) APP.exitApp();
 };
 
 /* Håll skärmen tänd under match */
