@@ -372,6 +372,14 @@
 <script type="application/json" id="changelog">
 [
   {
+    "v": "2.0.0",
+    "items": [
+      "Android-app! Appen finns nu som riktig app med larm som ljuder även när skärmen är släckt eller appen ligger i bakgrunden.",
+      "Egen app-ikon med visselpipan.",
+      "Webbversionen fungerar precis som förut för iPhone."
+    ]
+  },
+  {
     "v": "1.9.0",
     "items": [
       "Skärmen låses nu automatiskt när en period startas eller fortsätter – knappen 'Lås skärmen' behövs inte längre.",
@@ -460,7 +468,7 @@
    Höj detta nummer varje gång en ny version laddas upp!
    Appen jämför sitt eget nummer med det som ligger på servern
    och visar en uppdateringsknapp om de skiljer sig. */
-const APP_VERSION = "1.9.0";
+const APP_VERSION = "2.0.0";
 
 /* ================= SPELFORMER =================
    Speltider från svenskfotboll.se (nationella spelformer) */
@@ -790,11 +798,13 @@ function startClock(){
   render();
   saveCurrent();
   setLocked(true); // nu åker telefonen ner i fickan – lås direkt
+  scheduleAlarm(cfg.min*60 - elapsed); // systemlarm vid periodens slut
 }
 function stopClock(){
   running = false;
   clearInterval(tickTimer);
   clearTimeout(relockTimer);
+  cancelAlarm();
   render();
   saveCurrent();
 }
@@ -819,7 +829,59 @@ function mainButton(){
   startClock();
 }
 
-/* ================= LARM ================= */
+/* ================= BAKGRUNDSLARM (endast Android-appen) =================
+   När appen körs som riktig app schemaläggs en systemnotis exakt vid
+   periodens slut. Den ljuder även om skärmen är släckt eller appen har
+   stängts av systemet. I webbläsaren händer inget av detta. */
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const LN = NATIVE ? window.Capacitor.Plugins.LocalNotifications : null;
+const NOTIF_ID = 4711;
+
+async function initNotifications(){
+  if(!LN) return;
+  try{
+    const perm = await LN.checkPermissions();
+    if(perm.display !== "granted") await LN.requestPermissions();
+    // Egen kanal så larmet låter högt och kringgår ljudlöst läge så gott det går
+    if(LN.createChannel){
+      await LN.createChannel({
+        id: "domarklockan-larm",
+        name: "Matchlarm",
+        description: "Larm när en period tar slut",
+        importance: 5,        // högsta – visas som popup och låter
+        visibility: 1,
+        vibration: true,
+        sound: "default"
+      });
+    }
+  }catch(e){}
+}
+
+async function scheduleAlarm(secondsLeft){
+  if(!LN || secondsLeft <= 0) return;
+  await cancelAlarm();
+  const last = period >= cfg.periods;
+  try{
+    await LN.schedule({notifications:[{
+      id: NOTIF_ID,
+      channelId: "domarklockan-larm",
+      title: last ? "Full tid!" : `Period ${period} är slut!`,
+      body: last ? `Slutresultat ${home} – ${away}` : `Ställning ${home} – ${away}`,
+      schedule: { at: new Date(Date.now() + secondsLeft*1000), allowWhileIdle: true },
+      smallIcon: "ic_stat_icon",
+      iconColor: "#FFD60A",
+      ongoing: false
+    }]});
+  }catch(e){}
+}
+
+async function cancelAlarm(){
+  if(!LN) return;
+  try{ await LN.cancel({notifications:[{id: NOTIF_ID}]}); }catch(e){}
+}
+
+initNotifications();
+/* ================= LARM (ljud i appen) ================= */
 function initAudio(){
   if(!audioCtx){
     audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -869,10 +931,15 @@ $("btnDismiss").onclick = ()=>{
 };
 
 /* ================= MÅL ================= */
-$("homeTeam").onclick = e=>{ if(e.target.id!=="homeMinus"){ home++; render(); saveCurrent(); } };
-$("awayTeam").onclick = e=>{ if(e.target.id!=="awayMinus"){ away++; render(); saveCurrent(); } };
-$("homeMinus").onclick = e=>{ e.stopPropagation(); if(home>0) home--; render(); saveCurrent(); };
-$("awayMinus").onclick = e=>{ e.stopPropagation(); if(away>0) away--; render(); saveCurrent(); };
+function goalChanged(){
+  render(); saveCurrent();
+  // Notisen visar ställningen – schemalägg om den så texten stämmer
+  if(running && !alarmFired) scheduleAlarm(cfg.min*60 - elapsed);
+}
+$("homeTeam").onclick = e=>{ if(e.target.id!=="homeMinus"){ home++; goalChanged(); } };
+$("awayTeam").onclick = e=>{ if(e.target.id!=="awayMinus"){ away++; goalChanged(); } };
+$("homeMinus").onclick = e=>{ e.stopPropagation(); if(home>0) home--; goalChanged(); };
+$("awayMinus").onclick = e=>{ e.stopPropagation(); if(away>0) away--; goalChanged(); };
 
 /* ================= LAGFÄRGER ================= */
 const KIT_COLORS = [
