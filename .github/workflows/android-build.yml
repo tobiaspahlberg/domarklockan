@@ -40,6 +40,9 @@ jobs:
       - name: Installera projektets paket
         run: npm ci
 
+      - name: Generera app-ikoner
+        run: npx @capacitor/assets generate --android
+
       - name: Kopiera webbfilerna till Android-projektet
         run: npx cap sync android
 
